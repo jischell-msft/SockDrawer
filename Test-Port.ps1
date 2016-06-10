@@ -5,7 +5,9 @@ function Test-Port {
 Test connectivity to one or more computers. Requires PowerShell version 4 or later.
 
 .Description
-Test connectivity to one or more computers. Primary goal of this cmdlet was to test connectivity against specific ports, using methods available in Constrained Languauge Mode. This cmdlet uses Test-Connection and Test-NetConnection.
+Test connectivity to one or more computers. Primary goal of this cmdlet was to 
+test connectivity against specific ports, using methods available in Constrained 
+Languauge Mode. This cmdlet uses Test-Connection and Test-NetConnection.
 
 .Example
 PS > Test-Port -Port 135
@@ -13,7 +15,8 @@ PS > Test-Port -Port 135
 
 Description
 -----------
-When no computer name is specified, the check will be against the local machine. Because the machine responded for ping, and port 135, the result was 'True'.
+When no computer name is specified, the check will be against the local machine. 
+Because the machine responded for ping, and port 135, the result was 'True'.
 
 .Example
 PS > Test-Port -ComputerName NotOnline -CommonPort RPC
@@ -59,22 +62,34 @@ PS > $DCStatus.Where({$_.Status -eq $false}).Tests.Where({$_.Passed -eq $false})
 
 Description
 -----------
-In the above example, DC01 fails one of the tests within 'ADMinimum'. Because the details have been sent to the variable 'DCStatus', the user can view the complete results, then drill down to see where the failure occured.
+In the above example, DC01 fails one of the tests within 'ADMinimum'. Because 
+the details have been sent to the variable 'DCStatus', the user can view the 
+complete results, then drill down to see where the failure occured.
 
 .Parameter ComputerName
 Specifies the computer name (or names) that should be tested.
 
 .Parameter CommonPort
-Specifies the common port to check (in friendly terms). Currently focused on Active Directory, additional common ports may be added later. Available options include: DNS (53), Kerberos (88), RPC (135), LDAP (389), LDAPssl (636), GC (3268), GCssl (3269), RDP (3389), WinRM (5985), WinRMssl (5986).
+Specifies the common port to check (in friendly terms). Currently focused on 
+Active Directory, additional common ports may be added later. Available options 
+include: DNS (53), Kerberos (88), RPC (135), LDAP (389), LDAPssl (636), GC (3268), 
+GCssl (3269), RDP (3389), WinRM (5985), WinRMssl (5986).
 
 .Parameter CommonService
-Specifies the common service to check - a service is comprised of one or more ports. Available options include: ADFull (DNS, Kerberos, RPC, LDAP, GC, WinRM), ADMinimum (Kerberos, RPC, LDAP), ADssl (DNS, Kerberos, RPC, LDAP, LDAPssl, GC, GCssl, WinRM), DNS (DNS)
+Specifies the common service to check - a service is comprised of one or more 
+ports. Available options include: ADFull (DNS, Kerberos, RPC, LDAP, GC, WinRM), 
+ADMinimum (Kerberos, RPC, LDAP), ADssl (DNS, Kerberos, RPC, LDAP, LDAPssl, GC, 
+GCssl, WinRM), DNS (DNS)
 
 .Parameter Port
 Specifies the port to test. Valid values are 1-65535.
 
 .Parameter InfoVariable
-Specifies the variable that should be used for the extended information, regarding the test results. This option will evenually be deprecated, though for now 'Write-Information' is not commonly available (WMF5 and later); when deprecated, the data will be sent to Write-Information and accessable via the common InformationVariable parameter.
+Specifies the variable that should be used for the extended information, 
+regarding the test results. This option will evenually be deprecated, though 
+for now 'Write-Information' is not commonly available (WMF5 and later); when 
+deprecated, the data will be sent to Write-Information and accessable via the 
+common InformationVariable parameter.
 
 .Notes
 
@@ -227,7 +242,8 @@ SOFTWARE.
                     $PortCollection = @( $portKerberos, $portRPC, $portLDAP )
                 }
                 "ADssl" {
-                    $PortCollection = @( $portDNS, $portKerberos, $portRPC, $portLDAP, $portLDAPssl ,$portGC, $portGCssl, $portWinRM )
+                    $PortCollection = @( $portDNS, $portKerberos, $portRPC, $portLDAP, $portLDAPssl ,$portGC, 
+                        $portGCssl, $portWinRM )
                 }
                 "DNS" { $PortCollection = @($portDNS) }
             }
