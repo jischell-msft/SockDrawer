@@ -117,10 +117,13 @@ SOFTWARE.
 
 #### Name:       Test-Port
 #### Author:     Jim Schell
-#### Version:    0.1.2
+#### Version:    0.1.3
 #### License:    MIT License
 
 ### Change Log
+
+##### 2016-06-10::0.1.3
+- Had to bump 'Scope' for 'InfoVariable' by 1 (now @2) for functionality within modules...
 
 ##### 2016-06-10::0.1.2
 - proper help and examples complete
@@ -336,7 +339,7 @@ SOFTWARE.
         }
         # Not guranteed to be on WMF5+, can't rely on Write-Information, '-InformationVariable'
         if($InfoVariable){
-            New-Variable -Name $($InfoVariable) -Value $InformationStatusAll -Scope 1 -Force
+            New-Variable -Name $($InfoVariable) -Value $InformationStatusAll -Scope 2 -Force
         }
     }
 }
