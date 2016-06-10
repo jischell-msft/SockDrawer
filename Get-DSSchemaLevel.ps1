@@ -1,3 +1,4 @@
+#Requires -Module ActiveDirectory
 function Get-DSSchemaLevel {
 <#
 .Synopsis
@@ -72,8 +73,6 @@ SOFTWARE.
 - Initial creation
 #>
 
-    
-    #Requires -Module ActiveDirectory
 
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
