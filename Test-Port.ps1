@@ -293,18 +293,6 @@ SOFTWARE.
                 ForEach($Entry in $PortCollection) {
                     $paramTestPort.Port = $Entry.PortNum
                     
-                    $statusParamPortName = @{
-                        MemberType = "NoteProperty"
-                        Name = "Test"
-                        Value = "$($Entry.Name)"
-                    }
-                    
-                    $statusParamPortNum = @{
-                        MemberType = "NoteProperty"
-                        Name = "PortNum"
-                        Value = $Entry.PortNum
-                    }
-                    
                     $statusPortBool = Test-NetConnection @paramTestPort
                     $statusPort = New-Object -typeName PsObject -Property ([ordered]@{
                         ComputerName = $Computer
