@@ -8,6 +8,10 @@ This is one of the tools used to test for token bloat issues. While a group memb
 greater than 1015 (1024 - 9) does not guarantee there will be an issue, we have yet to 
 encounter a case where it has *not* been a problem.
 
+Caveat: If DirectorySearcher cannot resolve in a timely manner, the domain will be returned
+as '##External/ Could not resolve'. This does not mean that the next run (one minute later,
+one hour later, etc...) will be unable to resolve.
+
 .Example
 PS > Get-UserMembership
 
