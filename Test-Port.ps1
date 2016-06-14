@@ -73,7 +73,7 @@ Specifies the computer name (or names) that should be tested.
 Specifies the common port to check (in friendly terms). Currently focused on 
 Active Directory, additional common ports may be added later. Available options 
 include: DNS (53), Kerberos (88), RPC (135), LDAP (389), LDAPssl (636), GC (3268), 
-GCssl (3269), RDP (3389), WinRM (5985), WinRMssl (5986).
+GCssl (3269), RDP (3389), WinRM (5985), WinRMssl (5986), ADWS (9389).
 
 .Parameter CommonService
 Specifies the common service to check - a service is comprised of one or more 
@@ -117,10 +117,15 @@ SOFTWARE.
 
 #### Name:       Test-Port
 #### Author:     Jim Schell
-#### Version:    0.1.3
+#### Version:    0.1.4
 #### License:    MIT License
 
 ### Change Log
+
+##### 2016-06-14::0.1.4
+- Updated 'Scope' on 'InfoVariable' to 'global'. Feels dirty, though there doesn't appear to be better way at present
+- Added common port 'ADWS'
+- Updated CommonPort to accept array of values
 
 ##### 2016-06-10::0.1.3
 - Had to bump 'Scope' for 'InfoVariable' by 1 (now @2) for functionality within modules...
@@ -157,12 +162,14 @@ SOFTWARE.
         
         [Parameter(Mandatory = $True,
             ParameterSetName = "CommonPortSet")]
-        [ValidateSet("DNS", "Kerberos", "RPC", "LDAP", "LDAPssl", "GC", "GCssl", "RDP", "WinRM", "WinRMssl")]
+        [ValidateSet("DNS", "Kerberos", "RPC", "LDAP", "LDAPssl", "GC", "GCssl", "RDP", "WinRM", "WinRMssl", "ADWS")]
+        [String[]]
         $CommonPort,
         
         [Parameter(Mandatory = $True,
             ParameterSetName = "CommonServiceSet")]
         [ValidateSet("ADFull","ADMinimum","ADssl","DNS")]
+        [String]
         $CommonService,
         
         [Parameter(Mandatory = $True,
@@ -220,33 +227,51 @@ SOFTWARE.
             Name = "WinRMssl"
             PortNum = 5986
         }
+        $portADWS = New-Object -typeName PsObject -Property @{
+            Name = "ADWS"
+            PortNum = 9389
+        }
         
         $PortCollection = @()
         if($CommonPort) {
-            Switch ($CommonPort) {
-                "DNS" { $PortCollection = @($portDNS) }
-                "Kerberos" {  $PortCollection = @($portKerberos) }
-                "RPC" { $PortCollection = @($portRPC) }
-                "LDAP" { $PortCollection = @($portLDAP) }
-                "LDAPssl" { $PortCollection = @($portLDAPssl) }
-                "GC" { $PortCollection = @($portGC) }
-                "GCssl" { $PortCollection = @($portGCssl) }
-                "RDP" { $PortCollection = @($portRDP) }
-                "WinRM" { $PortCollection = @($portWinRM) }
-                "WinRMssl" { $PortCollection = @($portWinRMssl) }
+            foreach($Entry in $CommonPort){
+                Switch ($Entry) {
+                    "DNS" { 
+                        $PortCollection += @($portDNS) }
+                    "Kerberos" {  
+                        $PortCollection += @($portKerberos) }
+                    "RPC" { 
+                        $PortCollection += @($portRPC) }
+                    "LDAP" { 
+                        $PortCollection += @($portLDAP) }
+                    "LDAPssl" { 
+                        $PortCollection += @($portLDAPssl) }
+                    "GC" { 
+                        $PortCollection += @($portGC) }
+                    "GCssl" { 
+                        $PortCollection += @($portGCssl) }
+                    "RDP" { 
+                        $PortCollection += @($portRDP) }
+                    "WinRM" { 
+                        $PortCollection += @($portWinRM) }
+                    "WinRMssl" { 
+                        $PortCollection += @($portWinRMssl) }
+                    "ADWS" {
+                        $PortCollection += @($portADWS) }
+                }
             }
         }
         if($CommonService) {
             Switch ($CommonService) {
                 "ADFull" { 
-                    $PortCollection = @( $portDNS, $portKerberos, $portRPC, $portLDAP, $portGC, $portWinRM )
+                    $PortCollection = @( $portDNS, $portKerberos, $portRPC, $portLDAP, $portGC, $portWinRM, $portADWS )
                 }
                 "ADMinimum" {
                     $PortCollection = @( $portKerberos, $portRPC, $portLDAP )
                 }
                 "ADssl" {
                     $PortCollection = @( $portDNS, $portKerberos, $portRPC, $portLDAP, $portLDAPssl ,$portGC, 
-                        $portGCssl, $portWinRM )
+                        $portGCssl, $portWinRM, $portADWS )
                 }
                 "DNS" { $PortCollection = @($portDNS) }
             }
@@ -327,7 +352,7 @@ SOFTWARE.
         }
         # Not guranteed to be on WMF5+, can't rely on Write-Information, '-InformationVariable'
         if($InfoVariable){
-            New-Variable -Name $($InfoVariable) -Value $InformationStatusAll -Scope 2 -Force
+            New-Variable -Name $($InfoVariable) -Value $InformationStatusAll -Scope Global -Force
         }
     }
 }
