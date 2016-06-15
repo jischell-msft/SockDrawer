@@ -48,10 +48,14 @@ SOFTWARE.
 
 #### Name:      help.FunctionName.tests.ps1
 #### Author:    Jim Schell
-#### Version:   0.1.3
+#### Version:   0.1.4
 #### License    MIT
 
 ### Change Log
+
+##### 2016-06-14::0.1.4
+- appears that loading 'help' was missed... whoops
+- updated match patern, dropped trailing '\'
 
 ##### 2016-06-06::0.1.3
 - updated to allow for tests to be in directory other than where the test is invoked. If the test is in a directory named 'test' or 'tests', will go up one level, search recursively for [functionName].ps1
@@ -69,14 +73,15 @@ SOFTWARE.
 
 $functionName = "Test-PsRemoting"
 
-if($psScriptRoot -match ("\\Test\\|\\Tests\\") ){
-    $functionPath = Get-ChildItem -path $psScriptRoot\.. -filter "$($functionName).ps1" -recurse
-    . "$(functionPath.FullName)"
+if($psScriptRoot -match ("\\Test|\\Tests") ){
+    $functionPath = Get-ChildItem -path ..\ -filter "$($functionName).ps1" -recurse
+    . "$($functionPath.FullName)"
 }
 else {
     . "$($psScriptRoot)\$($functionName).ps1"
 }
 
+$Help = Get-Help $functionName -ErrorAction SilentlyContinue
 
 Describe "Test help for $functionName" {
 
