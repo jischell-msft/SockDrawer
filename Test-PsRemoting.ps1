@@ -79,7 +79,7 @@ SOFTWARE.
     Param( 
         [Parameter(Mandatory = $False)]
         [String[]]
-        $Computername = $env:ComputerName
+        $ComputerName = $env:ComputerName
     ) 
     
     Process {
