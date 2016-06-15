@@ -69,7 +69,7 @@ SOFTWARE.
 
 $functionName = "Test-PsRemoting"
 
-if( ($psScriptRoot -match ("\\Test\\|\\Tests\\") {
+if($psScriptRoot -match ("\\Test\\|\\Tests\\") ){
     $functionPath = Get-ChildItem -path $psScriptRoot\.. -filter "$($functionName).ps1" -recurse
     . "$(functionPath.FullName)"
 }
