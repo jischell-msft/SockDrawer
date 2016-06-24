@@ -117,10 +117,13 @@ SOFTWARE.
 
 #### Name:       Test-Port
 #### Author:     Jim Schell
-#### Version:    0.1.4
+#### Version:    0.1.5
 #### License:    MIT License
 
 ### Change Log
+
+##### 2016-06-24::0.1.5
+- Updated 'Port' to accept array of values
 
 ##### 2016-06-14::0.1.4
 - Updated 'Scope' on 'InfoVariable' to 'global'. Feels dirty, though there doesn't appear to be better way at present
@@ -176,7 +179,7 @@ SOFTWARE.
             ValueFromPipelineByPropertyName = $True,
             ParameterSetName = "PortSet")]
         [ValidateRange(1,65535)]
-        [int]
+        [int[]]
         $Port,
         
         [Parameter(Mandatory = $False)]
@@ -277,11 +280,13 @@ SOFTWARE.
             }
         }
         if($Port) {
-            $portUser = New-Object -typeName PsObject -Property @{
-                Name = 'User Defined'
-                PortNum = $Port
-            }
-            $PortCollection = @($portUser)
+			foreach($Entry in $Port){
+				$portUser = New-Object -typeName PsObject -Property @{
+					Name = 'User Defined'
+					PortNum = $Entry
+				}
+				$PortCollection += @($portUser)
+			}
         }
         
         $paramPing = @{
