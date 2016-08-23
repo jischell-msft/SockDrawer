@@ -299,7 +299,6 @@ SOFTWARE.
             Port = ''
             InformationLevel = 'Quiet'
             ErrorAction = 'SilentlyContinue'
-            
         }
     }
     Process {
