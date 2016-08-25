@@ -1,15 +1,14 @@
-#Requires -Modules ActiveDirectory
-function Get-ADAttribute {
+function Get-DSAttribute {
 <#
 .Synopsis
-Get one or more attributes for one or more users accross an entire domain.
+Get one or more attributes for one or more users accross an entire domain. Does not require the Active Directory module.
 
 .Description
 Check the value of specified attributes for one or more users throughout the domain. Useful when checking on non-replicated attributes.
 
 .Example
 
-PS> Get-ADAttribute -Identity "CN=John Doe,OU=Standerd Users,DC=Contoso,DC=com" -Attribute ExtensionAttribute1
+PS> Get-DSAttribute -Identity jdoe -Attribute ExtensionAttribute1
 
 ComputerName    Property            PropertyValue   Identity
 ------------    --------            -------------   --------
@@ -22,7 +21,7 @@ Searches the domain of the user invoking the function for the attribute 'Extensi
 
 .Example
 
-PS> Get-ADAttribute -Identity jdoe -Attribute lastLogonTimeStamp,LockedOut
+PS> Get-DSAttribute -Identity jdoe -Attribute lastLogonTimeStamp,LockedOut
 
 ComputerName    Property            PropertyValue       Identity
 ------------    --------            -------------       --------
@@ -37,7 +36,7 @@ Searches the domain of the user invoking the function for the attributes 'lastLo
 
 .Example
 
-PS> Get-ADAttribute -Identity jdoe, "CN=Alice Robert,OU=Standerd Users,DC=Contoso,DC=com" -Attribute logonCount
+PS> Get-DSAttribute -Identity jdoe,alicer -Attribute logonCount
 
 ComputerName    Property    PropertyValue   Identity
 ------------    --------    -------------   --------
@@ -51,7 +50,7 @@ Description
 Searches the domain of the user invoking the function for the attributes 'logonCount' for the 'John Doe' and 'Alice Robert' users, returning the results as shown.
 
 .Parameter Identity
-Specifies the user(s) to target for the search.
+Specifies the user(s) samAccountName(s) to target for the search.
 
 .Parameter Attribute
 Specifies the attribute(s) to request from each domain controller, for each identity.
@@ -61,18 +60,15 @@ Specifies the domain to search; defaults to the current user's domain ( $env:Use
 
 .Notes
 
-Name:       Get-ADAttribute
+Name:       Get-DSAttribute
 Author:     Jim Schell
-Version:    0.1.1
+Version:    0.1.0
 License:    MIT License
 
 ChangeLog
 
-2016-08-25:0.1.1
-- Proper examples added
-
 2016-08-25:0.1.0
-- initial creation
+- initial creation, modification of the 'Get-ADAttribute' function which requires AD module
 #>
 
     
@@ -95,8 +91,13 @@ ChangeLog
     
     
     Begin {
-        $DomainControllerList = @(Get-AdDomainController -Filter * -Server $Domain | 
-            Select-Object -ExpandProperty Hostname | Sort-Object )
+        $DomainContext = New-Object System.DirectoryServices.ActiveDirectory.DirectoryContext("Domain", $Domain)
+        $DomainEntry = [System.DirectoryServices.ActiveDirectory.Domain]::GetDomain($DomainContext)
+        $DomainName = $DomainEntry.Name
+        $DomainControllerList = @($DomainEntry.DomainControllers | 
+            Select-Object -ExpandProperty Name | Sort-Object )
+        $DomainEntry.Dispose()
+        $ldapDomainPath = "LDAP://$DomainName:389"
         $msgDCFoundCount = "Found $($DomainControllerList.Count) DCs for the $($Domain) domain."
         Write-Verbose $msgDCFoundCount
     }
@@ -104,35 +105,37 @@ ChangeLog
         $CompleteResult = @()
         foreach($Object in $Identity){
             $ObjectResult = @()
-            Try {
-                $ObjectFound = Get-AdUser -Identity $Object
-                $msgObjectFound = "Found object with samAccountName of `'$($ObjectFound.samAccountName)`'"
+            $ObjectFilter =  "(&(objectCategory=person)(objectClass=person)(samaccountname=$($Object)))"
+        
+            $BasicSearch = [adsisearcher]($ldapDomainPath)
+            $BasicSearch.Filter = $ObjectFilter
+            $ObjectFound = $BasicSearch.FindOne()
+            $BasicSearch.Dispose()
+            if($ObjectFound.Count -eq 1){
+                $msgObjectFound = "Found object with samAccountName of `'$($ObjectFound.properties.samaccountname)`'"
                 Write-Verbose $msgObjectFound
                 foreach($Property in $Attribute){
+                    $PropertyLDAPFriendly = $Property.ToLower()
                     $PropertyResult = @()
-                    Try {
-                        $ValidateProperty = Get-AdUser -Identity $ObjectFound -Property $Property -Server $Domain | Out-Null
-                        foreach($DC in $DomainControllerList){
-                            $msgDCSearch = "Now checking `'$Property`' on computer `'$($DC)`'"
-                            Write-Verbose $msgDCSearch
-                            $DCSpecificResult = Get-AdUser -Identity $ObjectFound -Property $Property -Server $DC
-                            $DCPropertyResult = New-Object -TypeName PsObject -Property @{
-                                Identity = $($ObjectFound.samAccountName)
-                                ComputerName = $DC
-                                Property = $Property
-                                PropertyValue = $($DCSpecificResult.$($Property))
-                            }
-                            $PropertyResult += @($DCPropertyResult)
+                    
+                    foreach($DC in $DomainControllerList){
+                        $msgDCSearch = "Now checking `'$Property`' on computer `'$($DC)`'"
+                        Write-Verbose $msgDCSearch
+                        $DCSpecificPath = "LDAP://$($DC):389"
+                        $DCSearch = [adsisearcher]($DCSpecificPath)
+                        $DCSearch.Filter = $ObjectFilter
+                        $DCSpecificResult = $DCSearch.FindOne()
+                        $DCPropertyResult = New-Object -TypeName PsObject -Property @{
+                            Identity = $($ObjectFound.properties.samaccountname)
+                            ComputerName = $DC
+                            Property = $Property
+                            PropertyValue = $($DCSpecificResult.properties.$($PropertyLDAPFriendly))
                         }
-                    }
-                    Catch {
-                        "$_"
+                        $DCSearch.Dispose()
+                        $PropertyResult += @($DCPropertyResult)
                     }
                     $ObjectResult += @($PropertyResult)
                 }
-            }
-            Catch {
-                "$_"
             }
             $CompleteResult += @( $ObjectResult )
         }
