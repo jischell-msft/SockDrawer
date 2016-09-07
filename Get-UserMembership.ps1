@@ -75,10 +75,13 @@ SOFTWARE.
 
 #### Name:       Get-UserMembership
 #### Author:     Jim Schell
-#### Version:    0.1.0
+#### Version:    0.2.0
 #### License:    MIT License
 
 ### Change Log
+
+##### 2016-08-31::0.2.0
+- Updated content returned to include groups (SID and SamAccountName)
 
 ##### 2016-06-14::0.1.0
 - Initial re(creation)
@@ -108,7 +111,7 @@ SOFTWARE.
         foreach($Entry in $Principal){
             Try{
                 $user = New-Object System.Security.Principal.WindowsIdentity($Entry)
-                $userGroupMem = $user.Groups | Group-Object -Property AccountDomainSid | Select-Object count, name
+                $userGroupMem = $user.Groups | Group-Object -Property AccountDomainSid | Select-Object count, name, group
 
                 $userResults = New-Object -typeName PSObject ([ordered]@{
                     UserName = $user.name
@@ -120,9 +123,11 @@ SOFTWARE.
                     DomainName = "--Summary--"
                     Count = $user.groups.count
                     SID = "--Summary--"
+                    GroupSID = @()
+                    GroupName = @()
                 })
                 $userResults.Membership += @($summary)
-                
+                # $summaryView = $userResults.Membership.Where({$_.DomainName -eq '--Summary--'})
                 foreach($domain in $userGroupMem) {
                     $domainNameResolved = $null
                     if( $($domain.Name) -eq "" ){
@@ -141,8 +146,24 @@ SOFTWARE.
                         UserName = $user.name
                         DomainName = $domainNameResolved
                         Count = $domain.Count
-                        SID = $domain.Name
+                        DomainSID = $domain.Name
+                        GroupSID = @()
+                        GroupName = @()
                     })
+                    
+                    $groupSID = @( $userGroupMem.Where({$_.name -eq $($domain.Name)}) | 
+                        Select-Object -expandProperty Group | Select-Object -expandProperty Value )
+                    $groupName = @()
+                    foreach($sid in $groupSID ){
+                        $groupLookup = ([ADSI]"LDAP://<SID=$($sid)>")
+                        $groupName += @( $($groupLookup.properties.samaccountname) )
+                        Write-Verbose "Group name: $($groupLookup.properties.samaccountname)"
+                    }
+                    $membershipByDomain.GroupSID = $groupSID
+                    $membershipByDomain.GroupName = $groupName
+                    $userResults.Membership[0].GroupSID += @( $groupSID )
+                    $userResults.Membership[0].GroupName += @( $groupName )
+                    
                     $userResults.Membership += @($membershipByDomain)
                 }
                 $userResults.Membership = $userResults.Membership | Sort-Object Count -Descending 
@@ -150,6 +171,7 @@ SOFTWARE.
                 $user.Dispose()
             }
             Catch {
+                Write-Warning "$_"
                 Write-Warning "`'$Entry`' - $($_.Exception.InnerException.Message)"
                 $FailedToMapObject += @($Entry)
             }
